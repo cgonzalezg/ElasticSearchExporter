@@ -9,7 +9,8 @@ package com.holidaycheck.tools.elasticsearch.exporter.configurator
  */
 import scala.collection._
 
-case class Configurator(config: Map[String, Any]) {
+trait Configurator {
+  val config: Map[String, Any]
   val outHost: String = get(Conf.outHost).asInstanceOf[String]
   val inputHost: String = get(Conf.inHost).asInstanceOf[String]
   val indexIn: String = get(Conf.indexInput).asInstanceOf[String]

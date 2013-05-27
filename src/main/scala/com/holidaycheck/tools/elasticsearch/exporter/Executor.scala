@@ -1,15 +1,8 @@
 package com.holidaycheck.tools.elasticsearch.exporter
 
-import com.holidaycheck.tools.elasticsearch.exporter.writer._
-import org.elasticsearch.common.unit.TimeValue
 
-import scalaj.http.{HttpOptions, Http}
-
-import scala.util.parsing.json.{JSONArray, JSONFormat, JSONObject}
-import com.holidaycheck.tools.elasticsearch.exporter.configurator._
-import com.holidaycheck.tools.elasticsearch.exporter.reader.{Reader, TCPReader}
 import scala.util.control.Breaks
-import com.holidaycheck.tools.elasticsearch.exporter.agents.Agent
+import com.holidaycheck.tools.elasticsearch.exporter.protocols.{HttpProtocol, TcpProtocol, Protocol}
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,36 +12,18 @@ import com.holidaycheck.tools.elasticsearch.exporter.agents.Agent
  * To change this template use File | Settings | File Templates.
  */
 
-case class Entry(id: String, `type`: String, data: Array[Byte])
+sealed case class Entry(id: String, `type`: String, data: Array[Byte])
 
 
-class Pipe {
-  type TCP <: TcpProtocol
-  type HTTP <: HttpProtocol
+trait Pipe {
 
-  def selector[A <: Agent](conf: Map[String, Any])(implicit manifestA: Manifest[A]): A = {
-    val x = manifestA.erasure.asInstanceOf[A]
-    val config = manifestA.erasure.asInstanceOf[A] match {
-      case (m: TCP) => TCPConf(conf)
-      case (m: HTTP) => HttpConf(conf)
-
+  def pipe[A <: Protocol, B <: Protocol](conf: Map[String, Any])(implicit manifestA: Manifest[A], manifestB: Manifest[B]) = {
+    val input = manifestA.erasure.asInstanceOf[A].setConfiguration(conf)
+    val output = manifestB.erasure.asInstanceOf[B].setConfiguration(conf)
+    input.getMapping match {
+      case Some(x) => output.setMapping(x)
+      case None =>
     }
-    x.setConfig(config).asInstanceOf[A]
-
-  }
-
-  def mapping [A <: Reader , B <: Writer ](conf: Map[String, Any])(implicit manifestA: Manifest[A], manifestB: Manifest[B]) = {
-
-  }
-
-
-    def pipe[A <: Reader , B <: Writer ](conf: Map[String, Any])(implicit manifestA: Manifest[A], manifestB: Manifest[B]) = {
-    val input = selector[Reader](conf)
-    val output = selector[Writer](conf)
-      input.mapping match {
-        case Some(x) => output.mapping(x)
-        case None =>
-      }
     val loop = new Breaks
     loop.breakable {
       while (true) {
@@ -81,25 +56,22 @@ object Executor extends Pipe with App {
     "indexInput" -> "facetedsearch",
     "indexOutput" -> "facetedsearch",
     //Ports
-    "portHttp"-> "9200",
+    "portHttp" -> "9200",
     "portTCP" -> "9300",
     //types
-    "types"->List[String](),
+    "types" -> List[String](),
     //
-    "clusterName" ->"exporter"
-
+    "clusterName" -> "exporter"
 
 
   )
-  //
+
   val input = conf.get("Input_Protocol").get.toString
   val output = conf.get("Output_Protocol").get.toString
-  val configurations = (input, output) match {
+  (input, output) match {
     case ("tcp", "http") => {
-
-      pipe[TCPReader , HttpWriter](conf)
+      pipe[TcpProtocol, HttpProtocol](conf)
     }
-    //case ("http", "http") => print("no implemented")
     case _ => print("no implemented")
 
   }

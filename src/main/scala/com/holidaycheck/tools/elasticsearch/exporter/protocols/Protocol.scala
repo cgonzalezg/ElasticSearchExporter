@@ -11,8 +11,9 @@ import com.holidaycheck.tools.elasticsearch.exporter.Entry
  */
 trait Protocol {
   def read: Option[List[Entry]]
-  def write(buffer: List[Entry])
+  def write(buffer: List[Entry]):List[Option[String]]
   def getMapping: Option[Map[String,Array[Byte]]]
   def setMapping(mapping: Map[String,Array[Byte]])
+  def setConfiguration(conf: Map[String, Any]):Protocol
 }
 

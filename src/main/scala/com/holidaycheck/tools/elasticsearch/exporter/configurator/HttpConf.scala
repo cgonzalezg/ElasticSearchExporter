@@ -7,8 +7,8 @@ package com.holidaycheck.tools.elasticsearch.exporter.configurator
  * Time: 2:50 PM
  * To change this template use File | Settings | File Templates.
  */
-case class HttpConf(f: Map[String, Any]) extends Configurator(f) {
-  val inputURL = httpCreateor(this.inputHost,this.port,this.indexIn,this.types)
-  val outputURL = httpCreateor(this.outHost, this.port,this.indexIn, this.types)
+trait HttpConf extends Configurator {
+  val inputURL = httpCreator(this.inputHost, this.port, this.indexIn)
+  val outputURL = httpCreator(this.outHost, this.port, this.indexIn)
 
 }

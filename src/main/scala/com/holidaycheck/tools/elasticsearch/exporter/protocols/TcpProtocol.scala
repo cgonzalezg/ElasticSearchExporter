@@ -13,16 +13,14 @@ import org.elasticsearch.common.unit.TimeValue
  * Time: 7:48 PM
  * To change this template use File | Settings | File Templates.
  */
-class TcpProtocol(c: Map[String, Any]) extends TCPConf(c) with Protocol {
+sealed case class TcpProtocol(override val config: Map[String, Any]) extends TCPConf with Protocol {
 
   val nodeDev = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
   val clientDev = nodeDev.client()
   val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
   var searchResponse: SearchResponse = searchRequest.execute.actionGet
 
-  def read: Option[List[Entry]] = null
-
-  def write(buffer: List[Entry]) = {
+  def read: Option[List[Entry]] = {
     if (searchResponse.getHits.hits.length > 0) {
       searchResponse = clientDev.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
       val buffer = searchResponse.getHits.hits().toList.par.map(entry => {
@@ -31,8 +29,10 @@ class TcpProtocol(c: Map[String, Any]) extends TCPConf(c) with Protocol {
       Option(buffer)
     }
     else
-      Option.empty
+      None
   }
+
+  def write(buffer: List[Entry]) = null
 
   def getMapping: Option[Map[String, Array[Byte]]] = {
     import scala.collection.JavaConversions._
@@ -54,4 +54,7 @@ class TcpProtocol(c: Map[String, Any]) extends TCPConf(c) with Protocol {
 
   def setMapping(mapping: Map[String, Array[Byte]]) {}
 
+  def setConfiguration(c: Map[String, Any])= {
+    this.copy(c)
+  }
 }

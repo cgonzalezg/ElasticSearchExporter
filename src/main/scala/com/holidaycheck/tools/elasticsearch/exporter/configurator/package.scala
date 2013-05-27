@@ -9,7 +9,7 @@ package com.holidaycheck.tools.elasticsearch.exporter
  */
 package object configurator {
   val http = "http://"
-  def httpCreateor(host: String, port: String, index: String, types: List[String]) = {
+  def httpCreator(host: String, port: String, index: String) = {
     http+host+":"+port+"/"+index+"/"
   }
   object Conf extends Enumeration {

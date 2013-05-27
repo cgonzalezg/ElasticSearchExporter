@@ -10,7 +10,7 @@ import org.elasticsearch.common.settings.ImmutableSettings
  * To change this template use File | Settings | File Templates.
  */
 
-case class TCPConf(c: Map[String, Any]) extends Configurator(c) {
+trait TCPConf extends Configurator {
   def hostIn = this.inputHost + ":" + this.port
   def hostOut = this.outHost  + ":" + this.port
   def clusterName = get(Conf.clusterName).asInstanceOf[String]
