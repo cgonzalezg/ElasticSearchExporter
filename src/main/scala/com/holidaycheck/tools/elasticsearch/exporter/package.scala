@@ -8,6 +8,7 @@ package com.holidaycheck.tools.elasticsearch
  * To change this template use File | Settings | File Templates.
  */
 package object exporter {
+
   def seg(t: Long): Boolean = {
     (t - System.nanoTime() + (1000 * 1000 * 1000)) < 0
   }
@@ -17,4 +18,5 @@ package object exporter {
   def EntriesPerSecond(count: Long, i: Long, time: Long): Double= {
       (i.toDouble-count.toDouble) / ((System.nanoTime()-time)/(1000 * 1000 * 1000))
   }
+
 }
