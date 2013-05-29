@@ -5,6 +5,7 @@ import com.holidaycheck.tools.elasticsearch.exporter.configurator.TCPConf
 import org.elasticsearch.node.NodeBuilder
 import org.elasticsearch.action.search.{SearchResponse, SearchType, SearchRequestBuilder}
 import org.elasticsearch.common.unit.TimeValue
+import scala.collection
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,12 +14,12 @@ import org.elasticsearch.common.unit.TimeValue
  * Time: 7:48 PM
  * To change this template use File | Settings | File Templates.
  */
-sealed case class TcpProtocol(override val config: Map[String, Any]) extends TCPConf with Protocol {
+sealed class TcpProtocol extends TCPConf with Protocol {
 
-  val nodeDev = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
-  val clientDev = nodeDev.client()
-  val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
-  var searchResponse: SearchResponse = searchRequest.execute.actionGet
+  var searchResponse: SearchResponse = _
+  lazy val clientDev = nodeDev.client()
+  lazy val nodeDev = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
+  lazy val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
 
   def read: Option[List[Entry]] = {
     if (searchResponse.getHits.hits.length > 0) {
@@ -29,7 +30,7 @@ sealed case class TcpProtocol(override val config: Map[String, Any]) extends TCP
       Option(buffer)
     }
     else
-      None
+    None
   }
 
   def write(buffer: List[Entry]) = null
@@ -55,6 +56,12 @@ sealed case class TcpProtocol(override val config: Map[String, Any]) extends TCP
   def setMapping(mapping: Map[String, Array[Byte]]) {}
 
   def setConfiguration(c: Map[String, Any])= {
-    this.copy(c)
+    this.config = c
+    settingDev.put("node.name", "elasticsearch")
+    settingDev.put("discovery.zen.ping.multicast.enabled", false)
+    settingDev.put("discovery.zen.ping.unicast.hosts", hostIn)
+    val nodeDev2 = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
+    searchResponse = searchRequest.execute.actionGet
   }
+
 }

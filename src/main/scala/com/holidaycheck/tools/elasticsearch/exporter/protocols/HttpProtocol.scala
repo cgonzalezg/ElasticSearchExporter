@@ -5,7 +5,7 @@ import com.holidaycheck.tools.elasticsearch.exporter.Entry
 import java.net.{HttpURLConnection, URL}
 import scalaj.http.{HttpOptions, Http}
 
-sealed case class HttpProtocol(override val config: Map[String, Any]) extends HttpConf with Protocol {
+sealed case class HttpProtocol extends HttpConf with Protocol {
   def put(url: String, data: Array[Byte]) = {
     val uri = new URL(url);
     val conn = uri.openConnection().asInstanceOf[HttpURLConnection]
@@ -47,6 +47,7 @@ sealed case class HttpProtocol(override val config: Map[String, Any]) extends Ht
   def getMapping: Option[Map[String, Array[Byte]]] = null
 
   def setMapping(mapping: Map[String, Array[Byte]]) = {
+    create
     mapping.map(x => {
       (x._1 -> put(outputURL + "/" + x._1 + "/_mapping", x._2))
     })
@@ -56,6 +57,8 @@ sealed case class HttpProtocol(override val config: Map[String, Any]) extends Ht
     put(outputURL, "".getBytes)
   }
 
-  def setConfiguration(c: Map[String, Any]): Protocol = this.copy(c)
+  def setConfiguration(c: Map[String, Any]){
+    this.config=c
+  }
 
 }

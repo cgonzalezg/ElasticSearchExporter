@@ -11,12 +11,10 @@ import org.elasticsearch.common.settings.ImmutableSettings
  */
 
 trait TCPConf extends Configurator {
-  def hostIn = this.inputHost + ":" + this.port
-  def hostOut = this.outHost  + ":" + this.port
+  def hostIn = this.inputHost + ":" + this.portTcp
+  def hostOut = this.outHost  + ":" + this.portTcp
   def clusterName = get(Conf.clusterName).asInstanceOf[String]
-  val settingDev = ImmutableSettings.settingsBuilder();
-  settingDev.put("node.name", "facetedsearch-importer")
-  settingDev.put("discovery.zen.ping.multicast.enabled", false)
-  settingDev.put("discovery.zen.ping.unicast.hosts", hostIn)
+  lazy val settingDev = ImmutableSettings.settingsBuilder();
+
 
 }

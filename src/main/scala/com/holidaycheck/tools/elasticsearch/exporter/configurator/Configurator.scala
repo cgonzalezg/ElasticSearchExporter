@@ -10,13 +10,14 @@ package com.holidaycheck.tools.elasticsearch.exporter.configurator
 import scala.collection._
 
 trait Configurator {
-  val config: Map[String, Any]
-  val outHost: String = get(Conf.outHost).asInstanceOf[String]
-  val inputHost: String = get(Conf.inHost).asInstanceOf[String]
-  val indexIn: String = get(Conf.indexInput).asInstanceOf[String]
-  val indexOut: String = get(Conf.indexOutput).asInstanceOf[String]
-  val types: List[String] = get(Conf.types).asInstanceOf[List[String]]
-  val port: String = get(Conf.portHttp).asInstanceOf[String]
+  var config: Map[String, Any] =_
+  def outHost: String = get(Conf.outHost).asInstanceOf[String]
+  def inputHost: String = get(Conf.inHost).asInstanceOf[String]
+  def indexIn: String = get(Conf.indexInput).asInstanceOf[String]
+  def indexOut: String = get(Conf.indexOutput).asInstanceOf[String]
+  def types: List[String] = get(Conf.types).asInstanceOf[List[String]]
+  def portHttp: String = get(Conf.portHttp).asInstanceOf[String]
+  def portTcp: String = get(Conf.portTCP).asInstanceOf[String]
 
-  def get(value: String) = this.config.get(value).get
+  def get(value: String) = this.config.get(value.toString).get
 }

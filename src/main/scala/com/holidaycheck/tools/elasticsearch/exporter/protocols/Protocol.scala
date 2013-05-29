@@ -14,6 +14,6 @@ trait Protocol {
   def write(buffer: List[Entry]):List[Option[String]]
   def getMapping: Option[Map[String,Array[Byte]]]
   def setMapping(mapping: Map[String,Array[Byte]])
-  def setConfiguration(conf: Map[String, Any]):Protocol
+  def setConfiguration(conf: Map[String, Any])
 }
 
