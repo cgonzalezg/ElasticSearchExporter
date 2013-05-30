@@ -21,7 +21,7 @@ trait Protocol {
 
   def read: Option[List[Entry]]
 
-  def writer(buffer: Entry): List[Option[String]]
+  protected def writer(buffer: Entry): Option[String]
 
   def getMapping: Option[Map[String, Array[Byte]]]
 
@@ -40,16 +40,16 @@ trait Protocol {
 
   }
 
-  protected def write(buffer: List[Entry]): List[Option[String]] = {
+   def write(buffer: List[Entry]): List[Option[String]] = {
     import exporter._
     val aux = EntriesPerSecond(count, i, stepTime)
     count = i
     stepTime = System.nanoTime()
-    buffer.par.map(entry => {
-      writer
+    buffer.map(entry => {
       i = i + 1
       print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
-    })
+      writer(entry)
+    }).toList
   }
 }
 

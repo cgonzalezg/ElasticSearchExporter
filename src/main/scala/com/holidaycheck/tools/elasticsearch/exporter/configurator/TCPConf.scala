@@ -21,7 +21,7 @@ trait TCPConf extends Configurator {
   lazy val settingDevIn = ImmutableSettings.settingsBuilder();
   lazy val nodeDevIn = NodeBuilder.nodeBuilder().client(true).clusterName(clusterNameIn).settings(settingDevIn).node()
   lazy val clientDevIn = nodeDevIn.client()
-  lazy val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
+  lazy val searchRequest: SearchRequestBuilder = clientDevIn.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
 
   //Output Configuration
   def hostOut = this.outHost  + ":" + this.portTcp
@@ -29,6 +29,6 @@ trait TCPConf extends Configurator {
   lazy val settingDevOut = ImmutableSettings.settingsBuilder();
   lazy val nodeDevOut = NodeBuilder.nodeBuilder().client(true).clusterName(clusterNameIn).settings(settingDevIn).node()
   lazy val clientDevOut = nodeDevOut.client()
-  lazy val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
+
 
 }

@@ -6,6 +6,8 @@ import org.elasticsearch.node.NodeBuilder
 import org.elasticsearch.action.search.{SearchResponse, SearchType, SearchRequestBuilder}
 import org.elasticsearch.common.unit.TimeValue
 import scala.collection
+import org.elasticsearch.action.bulk.BulkRequestBuilder
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,28 +18,31 @@ import scala.collection
  */
 sealed class TcpProtocol extends TCPConf with Protocol {
   var searchResponse: SearchResponse = _
-  var x:Long = _
+  var bulkRequest: BulkRequestBuilder = _
 
   def read: Option[List[Entry]] = {
-    if (x > 0) {
-      searchResponse = clientDev.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
+    searchResponse = clientDevIn.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
+    if (searchResponse.getHits.hits.length > 0) {
       val buffer = searchResponse.getHits.hits().toList.par.map(entry => {
         Entry(entry.getId, entry.`type`(), entry.source())
       }).toList
-      x = searchResponse.getHits.hits.length
       Option(buffer)
     }
     else
-    None
+      None
   }
 
-  def writer(buffer: List[Entry]) = {
-    val bulkRequest = clientDevOut.prepareBulk()
-    buffer.par.map(entry => {
-      bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry).setSource(entry.data))
-    })
+  override def write(buffer: List[Entry]) = {
+    bulkRequest = clientDevOut.prepareBulk()
+    val list = super.write(buffer)
     bulkRequest.execute().actionGet()
-    List[Option]()
+    list
+  }
+
+   def writer(entry: Entry) = {
+    val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
+    bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+    None
   }
 
   def getMapping: Option[Map[String, Array[Byte]]] = {
@@ -58,16 +63,20 @@ sealed class TcpProtocol extends TCPConf with Protocol {
     Option(buffer)
   }
 
-  def setMapping(mapping: Map[String, Array[Byte]]) {}
+  def setMapping(mapping: Map[String, Array[Byte]]) {
+    mapping.map(t=>{
+      clientDevOut.admin().indices().create(new CreateIndexRequest(indexOut).mapping(t._1,new String(t._2)))
+    })
+  }
 
-  def setConfiguration(c: Map[String, Any])= {
+  def setConfiguration(c: Map[String, Any]) = {
     this.config = c
     settingDevIn.put("node.name", "elasticsearch")
     settingDevIn.put("discovery.zen.ping.multicast.enabled", false)
     settingDevIn.put("discovery.zen.ping.unicast.hosts", hostIn)
     searchResponse = searchRequest.execute.actionGet
     totalEntries = searchResponse.getHits.getTotalHits
-    x = 1
   }
+
   override var totalEntries: Long = _
 }

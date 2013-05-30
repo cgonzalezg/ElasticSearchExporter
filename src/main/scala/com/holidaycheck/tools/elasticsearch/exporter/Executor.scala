@@ -31,7 +31,7 @@ trait Pipe {
       while (true) {
         val buffer = input.read
         buffer match {
-          case Some(x) => output.writer(x)
+          case Some(x) => output.write(x)
           case None => loop.break()
         }
       }
@@ -52,21 +52,21 @@ object Executor extends Pipe with App {
   lazy val conf = Map[String, Any](
     //Hosts
     "inHost" -> "localhost",
-    "outHost" -> "m12n-sf.hc.lan",
+    "outHost" -> "localhost",
     //Protocols
     "Input_Protocol" -> "tcp",
-    "Output_Protocol" -> "http",
+    "Output_Protocol" -> "tcp",
     //Indexes
-    "indexInput" -> "facetedsearch-hotel",
-    "indexOutput" -> "facetedsearch-hotel",
+    "indexInput" -> "tweter",
+    "indexOutput" -> "tweter2",
     //Ports
     "portHttp" -> "9200",
-    "portTCP" -> "9393",
+    "portTCP" -> "9300",
     //types
-    "types" -> List[String]("hotel"),
+    "types" -> List[String]("tweet"),
     //Cluster Names
-    "clusterNameIn" -> "localhost-testing",
-    "clusterNameOut" ->""
+    "clusterNameIn" -> "elasticsearch",
+    "clusterNameOut" ->"elasticsearch"
 
   )
 
@@ -76,6 +76,7 @@ object Executor extends Pipe with App {
     case ("tcp", "http") => {
       pipe[TcpProtocol , HttpProtocol ](conf)
     }
+    case ("tcp", "tcp") => pipe[TcpProtocol, TcpProtocol](conf)
     case _ => print("no implemented")
 
   }

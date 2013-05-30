@@ -55,7 +55,7 @@ sealed class HttpProtocol extends HttpConf with Protocol {
   def read: Option[List[Entry]] = null
 
   def writer(buffer: Entry): Option[String] = {
-      post(entry, 0)
+      post(buffer, 0)
   }
 
   def getMapping: Option[Map[String, Array[Byte]]] = null
