@@ -19,14 +19,13 @@ sealed case class Entry(id: String, `type`: String, data: Array[Byte])
 trait Pipe {
 
   def pipe[A <: Protocol, B <: Protocol](conf: Map[String, Any])(implicit manifestA: Manifest[A], manifestB: Manifest[B]) = {
+    val time = System.nanoTime()
     val input = manifestA.erasure.newInstance.asInstanceOf[A]
     input.setConfiguration(conf)
     val output = manifestB.erasure.newInstance.asInstanceOf[B]
     output.setConfiguration(conf)
-    input.getMapping match {
-      case Some(x) => output.setMapping(x)
-      case None =>
-    }
+    output.synchronize(input)
+
     val loop = new Breaks
     loop.breakable {
       while (true) {
@@ -35,9 +34,11 @@ trait Pipe {
           case Some(x) => output.write(x)
           case None => loop.break()
         }
-
       }
     }
+    val totalTime = (System.nanoTime() - time) / (1000 * 1000 * 1000)
+    println("Total Time ->" + totalTime)
+    println("Average Entries/seg->" + "%7.2f".format(input.totalEntries.toDouble / totalTime.toDouble))
 
   }
 }
@@ -51,20 +52,20 @@ object Executor extends Pipe with App {
   lazy val conf = Map[String, Any](
     //Hosts
     "inHost" -> "localhost",
-    "outHost" -> "localhost",
+    "outHost" -> "m12n-sf.hc.lan",
     //Protocols
     "Input_Protocol" -> "tcp",
     "Output_Protocol" -> "http",
     //Indexes
-    "indexInput" -> "tweter",
-    "indexOutput" -> "tweeter2",
+    "indexInput" -> "facetedsearch-hotel",
+    "indexOutput" -> "facetedsearch-hotel",
     //Ports
     "portHttp" -> "9200",
-    "portTCP" -> "9300",
+    "portTCP" -> "9393",
     //types
-    "types" -> List[String]("tweet"),
+    "types" -> List[String]("hotel"),
     //
-    "clusterName" -> "elasticsearch"
+    "clusterName" -> "localhost-testing"
 
 
   )

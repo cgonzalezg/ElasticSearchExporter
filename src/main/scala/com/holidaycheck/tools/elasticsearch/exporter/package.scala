@@ -13,7 +13,7 @@ package object exporter {
     (t - System.nanoTime() + (1000 * 1000 * 1000)) < 0
   }
 
-  def percentage(n: Int, totalEntries: Long) = "%3.2f".format((n.toDouble / totalEntries.toDouble) * 100)
+  def percentage(n: Long, totalEntries: Long) = "%3.2f".format((n.toDouble / totalEntries.toDouble) * 100)
 
   def EntriesPerSecond(count: Long, i: Long, time: Long): Double= {
       (i.toDouble-count.toDouble) / ((System.nanoTime()-time)/(1000 * 1000 * 1000))

@@ -15,18 +15,18 @@ import scala.collection
  * To change this template use File | Settings | File Templates.
  */
 sealed class TcpProtocol extends TCPConf with Protocol {
-
   var searchResponse: SearchResponse = _
+  var x:Long = _
   lazy val clientDev = nodeDev.client()
   lazy val nodeDev = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
   lazy val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
-
   def read: Option[List[Entry]] = {
-    if (searchResponse.getHits.hits.length > 0) {
+    if (x > 0) {
       searchResponse = clientDev.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
       val buffer = searchResponse.getHits.hits().toList.par.map(entry => {
         Entry(entry.getId, entry.`type`(), entry.source())
       }).toList
+      x = searchResponse.getHits.hits.length
       Option(buffer)
     }
     else
@@ -60,8 +60,9 @@ sealed class TcpProtocol extends TCPConf with Protocol {
     settingDev.put("node.name", "elasticsearch")
     settingDev.put("discovery.zen.ping.multicast.enabled", false)
     settingDev.put("discovery.zen.ping.unicast.hosts", hostIn)
-    val nodeDev2 = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
     searchResponse = searchRequest.execute.actionGet
+    totalEntries = searchResponse.getHits.getTotalHits
+    x = 1
   }
-
+  override var totalEntries: Long = _
 }

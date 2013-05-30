@@ -9,6 +9,6 @@ package com.holidaycheck.tools.elasticsearch.exporter.configurator
  */
 trait HttpConf extends Configurator {
   def inputURL = httpCreator(this.inputHost, this.portHttp, this.indexIn)
-  def outputURL = httpCreator(this.outHost, this.portHttp, this.indexIn)
+  def outputURL = httpCreator(this.outHost, this.portHttp, this.indexOut)
 
 }
