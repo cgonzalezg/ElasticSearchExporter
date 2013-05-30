@@ -54,17 +54,8 @@ sealed class HttpProtocol extends HttpConf with Protocol {
 
   def read: Option[List[Entry]] = null
 
-  def write(buffer: List[Entry]): List[Option[String]] = {
-    import exporter._
-    val aux = EntriesPerSecond(count, i, stepTime)
-    count = i
-    stepTime = System.nanoTime()
-    buffer.par.map(entry => {
-      i = i + 1
-      print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
+  def writer(buffer: Entry): Option[String] = {
       post(entry, 0)
-
-    }).toList
   }
 
   def getMapping: Option[Map[String, Array[Byte]]] = null
@@ -85,7 +76,5 @@ sealed class HttpProtocol extends HttpConf with Protocol {
   }
 
   override var totalEntries: Long = _
-  var i: Long = 0
-  var count: Long = 0
-  var stepTime = time
+
 }

@@ -17,9 +17,7 @@ import scala.collection
 sealed class TcpProtocol extends TCPConf with Protocol {
   var searchResponse: SearchResponse = _
   var x:Long = _
-  lazy val clientDev = nodeDev.client()
-  lazy val nodeDev = NodeBuilder.nodeBuilder().client(true).clusterName(clusterName).settings(settingDev).node()
-  lazy val searchRequest: SearchRequestBuilder = clientDev.prepareSearch(indexIn).setSize(10000).setSearchType(SearchType.SCAN).setScroll(TimeValue.timeValueMillis(100000))
+
   def read: Option[List[Entry]] = {
     if (x > 0) {
       searchResponse = clientDev.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
@@ -33,12 +31,19 @@ sealed class TcpProtocol extends TCPConf with Protocol {
     None
   }
 
-  def write(buffer: List[Entry]) = null
+  def writer(buffer: List[Entry]) = {
+    val bulkRequest = clientDevOut.prepareBulk()
+    buffer.par.map(entry => {
+      bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry).setSource(entry.data))
+    })
+    bulkRequest.execute().actionGet()
+    List[Option]()
+  }
 
   def getMapping: Option[Map[String, Array[Byte]]] = {
     import scala.collection.JavaConversions._
 
-    val cs = clientDev.admin().cluster().prepareState().setFilterIndices(indexIn).execute().actionGet().getState();
+    val cs = clientDevIn.admin().cluster().prepareState().setFilterIndices(indexIn).execute().actionGet().getState();
     val imd = cs.getMetaData().index(indexIn).mappings()
 
     val buffer = types match {
@@ -57,9 +62,9 @@ sealed class TcpProtocol extends TCPConf with Protocol {
 
   def setConfiguration(c: Map[String, Any])= {
     this.config = c
-    settingDev.put("node.name", "elasticsearch")
-    settingDev.put("discovery.zen.ping.multicast.enabled", false)
-    settingDev.put("discovery.zen.ping.unicast.hosts", hostIn)
+    settingDevIn.put("node.name", "elasticsearch")
+    settingDevIn.put("discovery.zen.ping.multicast.enabled", false)
+    settingDevIn.put("discovery.zen.ping.unicast.hosts", hostIn)
     searchResponse = searchRequest.execute.actionGet
     totalEntries = searchResponse.getHits.getTotalHits
     x = 1

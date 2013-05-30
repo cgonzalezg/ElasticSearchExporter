@@ -1,6 +1,9 @@
 package com.holidaycheck.tools.elasticsearch.exporter.protocols
 
+import com.holidaycheck.tools.elasticsearch.exporter._
+import com.holidaycheck.tools.elasticsearch.exporter
 import com.holidaycheck.tools.elasticsearch.exporter.Entry
+import scala.Some
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,11 +13,15 @@ import com.holidaycheck.tools.elasticsearch.exporter.Entry
  * To change this template use File | Settings | File Templates.
  */
 trait Protocol {
+  var i: Long = 0
+  var count: Long = 0
+  val time = System.nanoTime()
+  var stepTime = time
   var totalEntries: Long
-   val time = System.nanoTime()
+
   def read: Option[List[Entry]]
 
-  def write(buffer: List[Entry]): List[Option[String]]
+  def writer(buffer: Entry): List[Option[String]]
 
   def getMapping: Option[Map[String, Array[Byte]]]
 
@@ -31,6 +38,18 @@ trait Protocol {
       case None =>
     }
 
+  }
+
+  protected def write(buffer: List[Entry]): List[Option[String]] = {
+    import exporter._
+    val aux = EntriesPerSecond(count, i, stepTime)
+    count = i
+    stepTime = System.nanoTime()
+    buffer.par.map(entry => {
+      writer
+      i = i + 1
+      print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
+    })
   }
 }
 

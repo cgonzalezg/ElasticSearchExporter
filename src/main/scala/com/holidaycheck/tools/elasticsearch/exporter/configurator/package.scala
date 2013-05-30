@@ -21,6 +21,8 @@ package object configurator {
     val types = "types"
     val portHttp = "portHttp"
     val portTCP = "portTCP"
-    val clusterName = "clusterName"
+    val clusterNameIn = "clusterNameIn"
+    val clusterNameOut = "clusterNameOut"
+
   }
 }

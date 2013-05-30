@@ -31,7 +31,7 @@ trait Pipe {
       while (true) {
         val buffer = input.read
         buffer match {
-          case Some(x) => output.write(x)
+          case Some(x) => output.writer(x)
           case None => loop.break()
         }
       }
@@ -64,9 +64,9 @@ object Executor extends Pipe with App {
     "portTCP" -> "9393",
     //types
     "types" -> List[String]("hotel"),
-    //
-    "clusterName" -> "localhost-testing"
-
+    //Cluster Names
+    "clusterNameIn" -> "localhost-testing",
+    "clusterNameOut" ->""
 
   )
 
@@ -80,38 +80,7 @@ object Executor extends Pipe with App {
 
   }
 
-
-  //  var lostRequest = List[String]()
-  //  var x = totalEntries
-  //  var stepTime = System.nanoTime()
-  //  var i = 1
-  //  var count = 0
-  //
-  //  //Create Indexes if its are not created
-  //  create(outputURL)
-  //  //Set the mappings if its not created
-  //  println(setMapping(outputURL, importMapping(inputURL)))
-  //
-  //  while (x > 0) {
-  //    val aux = EntriesPerSecond(count, i, stepTime)
-  //    count=i
-  //    stepTime=System.nanoTime()
-  //    searchResponse = clientDev.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
-  //    x = searchResponse.getHits.hits.length
-  //    lostRequest = searchResponse.getHits().hits().toList.par.map(entry => {
-  //      print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
-  //
-  //      i = i + 1
-  //      post(outputURL, entry, 0)
-  //    }).toList.flatten ::: lostRequest
-  //  }
-  //
-  //
-  //  val totalTime = (System.nanoTime() - time) / (1000 * 1000 * 1000)
-  //  println("Total Time ->" + totalTime)
-  //  println("Average Entries/seg->" + "%7.2f".format(totalEntries.toDouble / totalTime.toDouble))
-  //  println("Lost Resquests ->" + lostRequest.size, "\t", lostRequest)
-  println("Uuuhhhhhhhh fuck node.js")
+  println("Finish")
 
 
 }
