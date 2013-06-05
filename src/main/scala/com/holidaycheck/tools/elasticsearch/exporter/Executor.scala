@@ -66,8 +66,9 @@ object Executor extends Pipe with App {
     "types" -> List[String]("tweet"),
     //Cluster Names
     "clusterNameIn" -> "elasticsearch",
-    "clusterNameOut" ->"elasticsearch"
-
+    "clusterNameOut" ->"elasticsearch",
+    //buffer size
+    "bufferSize" -> 50000
   )
 
   val input = conf.get("Input_Protocol").get.toString
@@ -77,6 +78,8 @@ object Executor extends Pipe with App {
       pipe[TcpProtocol , HttpProtocol ](conf)
     }
     case ("tcp", "tcp") => pipe[TcpProtocol, TcpProtocol](conf)
+    case ("http", "http") => print("no implemented")
+    case ("http", "tcp") => print("no implemented")
     case _ => print("no implemented")
 
   }

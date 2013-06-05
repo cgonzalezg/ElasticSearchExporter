@@ -18,6 +18,7 @@ trait Configurator {
   def types: List[String] = get(Conf.types).asInstanceOf[List[String]]
   def portHttp: String = get(Conf.portHttp).asInstanceOf[String]
   def portTcp: String = get(Conf.portTCP).asInstanceOf[String]
+  def getBuffer: Int = get(Conf.buffer).asInstanceOf[Int]
 
   def get(value: String) = this.config.get(value.toString).get
 }

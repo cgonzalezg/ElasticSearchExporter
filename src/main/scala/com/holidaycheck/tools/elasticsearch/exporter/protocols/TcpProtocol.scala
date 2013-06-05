@@ -18,7 +18,6 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
  */
 sealed class TcpProtocol extends TCPConf with Protocol {
   var searchResponse: SearchResponse = _
-  var bulkRequest: BulkRequestBuilder = _
 
   def read: Option[List[Entry]] = {
     searchResponse = clientDevIn.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
@@ -32,16 +31,22 @@ sealed class TcpProtocol extends TCPConf with Protocol {
       None
   }
 
-  override def write(buffer: List[Entry]) = {
-    bulkRequest = clientDevOut.prepareBulk()
-    val list = super.write(buffer)
-    bulkRequest.execute().actionGet()
-    list
-  }
+  import collection.mutable.Buffer
 
-   def writer(entry: Entry) = {
-    val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
-    bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+  var sBuffer: Buffer[Entry] = Buffer[Entry]()
+
+  def writer(entry: Entry) = {
+    //add entry to new subuffer
+    sBuffer.append(entry)
+    if (sBuffer.size < getBuffer) {
+      val bulkRequest: BulkRequestBuilder = clientDevOut.prepareBulk()
+      val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
+      sBuffer.map(entry => {
+        bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+      })
+      sBuffer.clear()
+      bulkRequest.execute().actionGet()
+    }
     None
   }
 
@@ -64,8 +69,8 @@ sealed class TcpProtocol extends TCPConf with Protocol {
   }
 
   def setMapping(mapping: Map[String, Array[Byte]]) {
-    mapping.map(t=>{
-      clientDevOut.admin().indices().create(new CreateIndexRequest(indexOut).mapping(t._1,new String(t._2)))
+    mapping.map(t => {
+      clientDevOut.admin().indices().create(new CreateIndexRequest(indexOut).mapping(t._1, new String(t._2)))
     })
   }
 

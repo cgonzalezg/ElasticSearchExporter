@@ -23,6 +23,6 @@ package object configurator {
     val portTCP = "portTCP"
     val clusterNameIn = "clusterNameIn"
     val clusterNameOut = "clusterNameOut"
-
+    val buffer = "bufferSize"
   }
 }
