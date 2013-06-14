@@ -3,6 +3,7 @@ package com.holidaycheck.tools.elasticsearch.exporter
 
 import scala.util.control.Breaks
 import com.holidaycheck.tools.elasticsearch.exporter.protocols.{HttpProtocol, TcpProtocol, Protocol}
+import scala.io.Source
 
 /**
  * Created with IntelliJ IDEA.
@@ -70,6 +71,10 @@ object Executor extends Pipe with App {
     //buffer size
     "bufferSize" -> 50000
   )
+//  val jsonQuery: Array[Byte] = Option(Source.fromFile("").getLines().toList) match {
+//    case Some(head::tail)=>head.getBytes
+//    case None => match_all.getBytes()
+//  }
 
   val input = conf.get("Input_Protocol").get.toString
   val output = conf.get("Output_Protocol").get.toString

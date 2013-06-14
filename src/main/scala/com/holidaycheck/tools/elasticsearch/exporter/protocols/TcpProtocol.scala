@@ -2,8 +2,7 @@ package com.holidaycheck.tools.elasticsearch.exporter.protocols
 
 import com.holidaycheck.tools.elasticsearch.exporter.Entry
 import com.holidaycheck.tools.elasticsearch.exporter.configurator.TCPConf
-import org.elasticsearch.node.NodeBuilder
-import org.elasticsearch.action.search.{SearchResponse, SearchType, SearchRequestBuilder}
+import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.common.unit.TimeValue
 import scala.collection
 import org.elasticsearch.action.bulk.BulkRequestBuilder
@@ -33,7 +32,7 @@ sealed class TcpProtocol extends TCPConf with Protocol {
 
   import collection.mutable.Buffer
 
-  var sBuffer: Buffer[Entry] = Buffer[Entry]()
+  val sBuffer: Buffer[Entry] = Buffer[Entry]()
 
   def writer(entry: Entry) = {
     //add entry to new subuffer
@@ -44,8 +43,8 @@ sealed class TcpProtocol extends TCPConf with Protocol {
       sBuffer.map(entry => {
         bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
       })
-      sBuffer.clear()
       bulkRequest.execute().actionGet()
+      sBuffer.clear()
     }
     None
   }

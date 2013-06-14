@@ -8,30 +8,31 @@ import java.io.OutputStreamWriter
 import com.holidaycheck.tools.elasticsearch.exporter
 
 sealed class HttpProtocol extends HttpConf with Protocol {
-  def put(url: String, data: Array[Byte]) = {
+
+  def get(url: String, data: Array[Byte]) = {
+    request("GET",url, data)
+  }
+
+  def post(url: String, data: Array[Byte]) = {
+    request("POST",url,data)
+  }
+
+  def put (url: String, data: Array[Byte]) = {
+    request("PUT", url, data)
+  }
+
+  def request(`type`: String, url: String, data: Array[Byte]) = {
     val uri = new URL(url);
     val conn = uri.openConnection().asInstanceOf[HttpURLConnection]
-    conn.setRequestMethod("PUT");
+    conn.setRequestMethod(`type`);
     conn.setDoOutput(true);
     conn.setRequestProperty("Content-Type", "application/json")
     conn.setRequestProperty("Accept", "application/json")
     conn.getOutputStream().write(data)
     conn.getOutputStream().close()
-    conn.getResponseMessage
-  }
-
-  def put(url: String, data: String) = {
-    val uri = new URL(url);
-    val conn = uri.openConnection().asInstanceOf[HttpURLConnection]
-    conn.setRequestMethod("PUT");
-    conn.setDoOutput(true);
-    conn.setRequestProperty("Content-Type", "application/json")
-    conn.setRequestProperty("Accept", "application/json")
-    val osw = new OutputStreamWriter(conn.getOutputStream());
-    osw.write(data);
-    osw.flush();
-    osw.close();
-    conn.getResponseMessage
+    val response = conn.getResponseMessage
+    conn.disconnect()
+    response
   }
 
   def post(entry: Entry, resend: Int): Option[String] = {
@@ -53,9 +54,19 @@ sealed class HttpProtocol extends HttpConf with Protocol {
   }
 
   def read: Option[List[Entry]] = null
+//
+//     types match {
+//       case head :: tail => {
+//         types.map{
+//           t=> get(inputURL+"/"+indexIn +"/"+t+"/"+"_search?search_type=scan&scroll=1m&size="+getBuffer)
+//         }
+//       }
+//       case None => get(inputURL+"/"+indexIn+"/"+"_search?search_type=scan&scroll=1m&size="+getBuffer,)
+//     }
+//  }
 
   def writer(buffer: Entry): Option[String] = {
-      post(buffer, 0)
+    post(buffer, 0)
   }
 
   def getMapping: Option[Map[String, Array[Byte]]] = null

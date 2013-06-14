@@ -19,4 +19,5 @@ package object exporter {
       (i.toDouble-count.toDouble) / ((System.nanoTime()-time)/(1000 * 1000 * 1000))
   }
 
+  val match_all = "{\"query\":{\"match_all\":{}}}"
 }
