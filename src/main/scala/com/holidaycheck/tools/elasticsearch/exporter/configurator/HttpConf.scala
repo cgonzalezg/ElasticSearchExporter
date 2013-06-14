@@ -8,7 +8,9 @@ package com.holidaycheck.tools.elasticsearch.exporter.configurator
  * To change this template use File | Settings | File Templates.
  */
 trait HttpConf extends Configurator {
-  def inputURL = httpCreator(this.inputHost, this.portHttp, this.indexIn)
-  def outputURL = httpCreator(this.outHost, this.portHttp, this.indexOut)
+  def portHttpIn: String = get(Conf.portHttpIn).asInstanceOf[String]
+  def portHttpOut: String = get(Conf.portHttpIn).asInstanceOf[String]
+  def inputURL = httpCreator(this.inputHost, this.portHttpIn, this.indexIn)
+  def outputURL = httpCreator(this.outHost, this.portHttpOut, this.indexOut)
 
 }

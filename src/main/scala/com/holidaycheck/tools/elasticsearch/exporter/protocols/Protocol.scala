@@ -45,7 +45,7 @@ trait Protocol {
     val aux = EntriesPerSecond(count, i, stepTime)
     count = i
     stepTime = System.nanoTime()
-    buffer.map(entry => {
+    buffer.par.map(entry => {
       i = i + 1
       print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
       writer(entry)

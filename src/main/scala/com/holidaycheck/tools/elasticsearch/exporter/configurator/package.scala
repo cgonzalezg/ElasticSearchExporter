@@ -19,8 +19,10 @@ package object configurator {
     val indexInput="indexInput"
     val indexOutput="indexOutput"
     val types = "types"
-    val portHttp = "portHttp"
-    val portTCP = "portTCP"
+    val portHttpIn = "portHttpIn"
+    val portHttpOut = "portHttpOut"
+    val portTCPIn = "portTCPIn"
+    val portTCPOut = "portTCPOut"
     val clusterNameIn = "clusterNameIn"
     val clusterNameOut = "clusterNameOut"
 

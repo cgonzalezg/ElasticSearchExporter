@@ -1,6 +1,6 @@
 package com.holidaycheck.tools.elasticsearch.exporter.protocols
 
-import com.holidaycheck.tools.elasticsearch.exporter.Entry
+import com.holidaycheck.tools.elasticsearch.exporter._
 import com.holidaycheck.tools.elasticsearch.exporter.configurator.TCPConf
 import org.elasticsearch.node.NodeBuilder
 import org.elasticsearch.action.search.{SearchResponse, SearchType, SearchRequestBuilder}
@@ -8,6 +8,7 @@ import org.elasticsearch.common.unit.TimeValue
 import scala.collection
 import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
+import com.holidaycheck.tools.elasticsearch.exporter.Entry
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,7 +19,6 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
  */
 sealed class TcpProtocol extends TCPConf with Protocol {
   var searchResponse: SearchResponse = _
-  var bulkRequest: BulkRequestBuilder = _
 
   def read: Option[List[Entry]] = {
     searchResponse = clientDevIn.prepareSearchScroll(searchResponse.getScrollId).setScroll(TimeValue.timeValueMillis(100000)).execute.actionGet
@@ -32,20 +32,55 @@ sealed class TcpProtocol extends TCPConf with Protocol {
       None
   }
 
-  override def write(buffer: List[Entry]) = {
-    bulkRequest = clientDevOut.prepareBulk()
-    val list = super.write(buffer)
-    bulkRequest.execute().actionGet()
-    list
-  }
+//  override def write(buffer: List[Entry]) = {
+//
+//    val tokenizer: List[List[Entry]] = buffer.grouped(100).toList
+//    tokenizer.par.map(p => {
+//      p match {
+//        case Nil => List()
+//        case (head :: tail) => {
+//          writer(p)
+//        }
+//        case _ => List()
+//      }
+//    })
+//    List()
+//
+//  }
 
-   def writer(entry: Entry) = {
+  def writer(entries: List[Entry]) = {
+    val bulkRequest = clientDevOut.prepareBulk()
     val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
-    bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+    entries.map(entry => {
+      val aux = EntriesPerSecond(count, i, stepTime)
+      i = i + 1
+      print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
+      bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+
+    })
+    val bulkResponse = bulkRequest.execute().actionGet()
+    if (bulkResponse.hasFailures()) {
+      println(bulkResponse.buildFailureMessage())
+    }
     None
   }
 
+  def writer(entry: Entry) = {
+    val bulkRequest = clientDevOut.prepareBulk()
+    val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
+    bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+    val bulkResponse = bulkRequest.execute().actionGet()
+    if (bulkResponse.hasFailures()) {
+      println(bulkResponse.buildFailureMessage())
+      Option(bulkResponse.buildFailureMessage())
+    } else {
+      None
+    }
+
+  }
+
   def getMapping: Option[Map[String, Array[Byte]]] = {
+
     import scala.collection.JavaConversions._
 
     val cs = clientDevIn.admin().cluster().prepareState().setFilterIndices(indexIn).execute().actionGet().getState();
@@ -64,8 +99,8 @@ sealed class TcpProtocol extends TCPConf with Protocol {
   }
 
   def setMapping(mapping: Map[String, Array[Byte]]) {
-    mapping.map(t=>{
-      clientDevOut.admin().indices().create(new CreateIndexRequest(indexOut).mapping(t._1,new String(t._2)))
+    mapping.map(t => {
+      clientDevOut.admin().indices().create(new CreateIndexRequest(indexOut).mapping(t._1, new String(t._2)))
     })
   }
 
@@ -74,6 +109,10 @@ sealed class TcpProtocol extends TCPConf with Protocol {
     settingDevIn.put("node.name", "elasticsearch")
     settingDevIn.put("discovery.zen.ping.multicast.enabled", false)
     settingDevIn.put("discovery.zen.ping.unicast.hosts", hostIn)
+
+    settingDevOut.put("node.name", "elasticsearch")
+    settingDevOut.put("discovery.zen.ping.multicast.enabled", false)
+    settingDevOut.put("discovery.zen.ping.unicast.hosts", hostOut)
     searchResponse = searchRequest.execute.actionGet
     totalEntries = searchResponse.getHits.getTotalHits
   }

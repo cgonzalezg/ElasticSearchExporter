@@ -15,7 +15,6 @@ import com.holidaycheck.tools.elasticsearch.exporter.protocols.{HttpProtocol, Tc
 sealed case class Entry(id: String, `type`: String, data: Array[Byte])
 
 
-
 trait Pipe {
 
   def pipe[A <: Protocol, B <: Protocol](conf: Map[String, Any])(implicit manifestA: Manifest[A], manifestB: Manifest[B]) = {
@@ -51,22 +50,26 @@ object Executor extends Pipe with App {
   //TODO Leer Conf.json
   lazy val conf = Map[String, Any](
     //Hosts
-    "inHost" -> "localhost",
-    "outHost" -> "localhost",
+    "inHost" -> "m12ndev1.hc.lan",
+    "outHost" -> "m12n-sf.hc.lan",
     //Protocols
     "Input_Protocol" -> "tcp",
-    "Output_Protocol" -> "tcp",
+    "Output_Protocol" -> "http",
     //Indexes
-    "indexInput" -> "tweter",
-    "indexOutput" -> "tweter2",
+    "indexInput" -> "facetedsearch-hotelreview",
+    "indexOutput" -> "facetedsearch-hotelreview",
     //Ports
-    "portHttp" -> "9200",
-    "portTCP" -> "9300",
+    //Http
+    "portHttpIn" -> "9200",
+    "portHttpOut" -> "9200",
+    //TCP
+    "portTCPIn" -> "9300",
+    "portTCPOut" -> "9300",
     //types
-    "types" -> List[String]("tweet"),
+    "types" -> List[String]("hotelreview"),
     //Cluster Names
-    "clusterNameIn" -> "elasticsearch",
-    "clusterNameOut" ->"elasticsearch"
+    "clusterNameIn" -> "m12ndev1",
+    "clusterNameOut" -> "m12n-sf"
 
   )
 
@@ -74,7 +77,7 @@ object Executor extends Pipe with App {
   val output = conf.get("Output_Protocol").get.toString
   (input, output) match {
     case ("tcp", "http") => {
-      pipe[TcpProtocol , HttpProtocol ](conf)
+      pipe[TcpProtocol, HttpProtocol](conf)
     }
     case ("tcp", "tcp") => pipe[TcpProtocol, TcpProtocol](conf)
     case _ => print("no implemented")
