@@ -3,6 +3,7 @@ package com.holidaycheck.tools.elasticsearch.exporter
 
 import scala.util.control.Breaks
 import com.holidaycheck.tools.elasticsearch.exporter.protocols.{HttpProtocol, TcpProtocol, Protocol}
+import scala.io.Source
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,6 +14,7 @@ import com.holidaycheck.tools.elasticsearch.exporter.protocols.{HttpProtocol, Tc
  */
 
 sealed case class Entry(id: String, `type`: String, data: Array[Byte])
+
 
 
 trait Pipe {
@@ -50,36 +52,39 @@ object Executor extends Pipe with App {
   //TODO Leer Conf.json
   lazy val conf = Map[String, Any](
     //Hosts
-    "inHost" -> "m12ndev1.hc.lan",
-    "outHost" -> "m12n-sf.hc.lan",
+    "inHost" -> "localhost",
+    "outHost" -> "localhost",
     //Protocols
     "Input_Protocol" -> "tcp",
-    "Output_Protocol" -> "http",
+    "Output_Protocol" -> "tcp",
     //Indexes
-    "indexInput" -> "facetedsearch-hotelreview",
-    "indexOutput" -> "facetedsearch-hotelreview",
+    "indexInput" -> "tweter",
+    "indexOutput" -> "tweter2",
     //Ports
-    //Http
-    "portHttpIn" -> "9200",
-    "portHttpOut" -> "9200",
-    //TCP
-    "portTCPIn" -> "9300",
-    "portTCPOut" -> "9300",
+    "portHttp" -> "9200",
+    "portTCP" -> "9300",
     //types
-    "types" -> List[String]("hotelreview"),
+    "types" -> List[String]("tweet"),
     //Cluster Names
-    "clusterNameIn" -> "m12ndev1",
-    "clusterNameOut" -> "m12n-sf"
-
+    "clusterNameIn" -> "elasticsearch",
+    "clusterNameOut" ->"elasticsearch",
+    //buffer size
+    "bufferSize" -> 50000
   )
+//  val jsonQuery: Array[Byte] = Option(Source.fromFile("").getLines().toList) match {
+//    case Some(head::tail)=>head.getBytes
+//    case None => match_all.getBytes()
+//  }
 
   val input = conf.get("Input_Protocol").get.toString
   val output = conf.get("Output_Protocol").get.toString
   (input, output) match {
     case ("tcp", "http") => {
-      pipe[TcpProtocol, HttpProtocol](conf)
+      pipe[TcpProtocol , HttpProtocol ](conf)
     }
     case ("tcp", "tcp") => pipe[TcpProtocol, TcpProtocol](conf)
+    case ("http", "http") => print("no implemented")
+    case ("http", "tcp") => print("no implemented")
     case _ => print("no implemented")
 
   }

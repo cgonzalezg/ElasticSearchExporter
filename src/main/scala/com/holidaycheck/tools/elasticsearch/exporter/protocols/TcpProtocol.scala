@@ -1,14 +1,12 @@
 package com.holidaycheck.tools.elasticsearch.exporter.protocols
 
-import com.holidaycheck.tools.elasticsearch.exporter._
+import com.holidaycheck.tools.elasticsearch.exporter.Entry
 import com.holidaycheck.tools.elasticsearch.exporter.configurator.TCPConf
-import org.elasticsearch.node.NodeBuilder
-import org.elasticsearch.action.search.{SearchResponse, SearchType, SearchRequestBuilder}
+import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.common.unit.TimeValue
 import scala.collection
 import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
-import com.holidaycheck.tools.elasticsearch.exporter.Entry
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,55 +30,26 @@ sealed class TcpProtocol extends TCPConf with Protocol {
       None
   }
 
-//  override def write(buffer: List[Entry]) = {
-//
-//    val tokenizer: List[List[Entry]] = buffer.grouped(100).toList
-//    tokenizer.par.map(p => {
-//      p match {
-//        case Nil => List()
-//        case (head :: tail) => {
-//          writer(p)
-//        }
-//        case _ => List()
-//      }
-//    })
-//    List()
-//
-//  }
+  import collection.mutable.Buffer
 
-  def writer(entries: List[Entry]) = {
-    val bulkRequest = clientDevOut.prepareBulk()
-    val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
-    entries.map(entry => {
-      val aux = EntriesPerSecond(count, i, stepTime)
-      i = i + 1
-      print(i + " of " + totalEntries + "(" + percentage(i, totalEntries) + "%) Entries/seg-> " + "%7.2f".format(aux) + "\r")
-      bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+  val sBuffer: Buffer[Entry] = Buffer[Entry]()
 
-    })
-    val bulkResponse = bulkRequest.execute().actionGet()
-    if (bulkResponse.hasFailures()) {
-      println(bulkResponse.buildFailureMessage())
+  def writer(entry: Entry) = {
+    //add entry to new subuffer
+    sBuffer.append(entry)
+    if (sBuffer.size < getBuffer) {
+      val bulkRequest: BulkRequestBuilder = clientDevOut.prepareBulk()
+      val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
+      sBuffer.map(entry => {
+        bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
+      })
+      bulkRequest.execute().actionGet()
+      sBuffer.clear()
     }
     None
   }
 
-  def writer(entry: Entry) = {
-    val bulkRequest = clientDevOut.prepareBulk()
-    val writeRequest = clientDevOut.prepareIndex().setIndex(indexOut)
-    bulkRequest.add(writeRequest.setType(entry.`type`).setId(entry.id).setSource(entry.data))
-    val bulkResponse = bulkRequest.execute().actionGet()
-    if (bulkResponse.hasFailures()) {
-      println(bulkResponse.buildFailureMessage())
-      Option(bulkResponse.buildFailureMessage())
-    } else {
-      None
-    }
-
-  }
-
   def getMapping: Option[Map[String, Array[Byte]]] = {
-
     import scala.collection.JavaConversions._
 
     val cs = clientDevIn.admin().cluster().prepareState().setFilterIndices(indexIn).execute().actionGet().getState();
@@ -109,10 +78,6 @@ sealed class TcpProtocol extends TCPConf with Protocol {
     settingDevIn.put("node.name", "elasticsearch")
     settingDevIn.put("discovery.zen.ping.multicast.enabled", false)
     settingDevIn.put("discovery.zen.ping.unicast.hosts", hostIn)
-
-    settingDevOut.put("node.name", "elasticsearch")
-    settingDevOut.put("discovery.zen.ping.multicast.enabled", false)
-    settingDevOut.put("discovery.zen.ping.unicast.hosts", hostOut)
     searchResponse = searchRequest.execute.actionGet
     totalEntries = searchResponse.getHits.getTotalHits
   }

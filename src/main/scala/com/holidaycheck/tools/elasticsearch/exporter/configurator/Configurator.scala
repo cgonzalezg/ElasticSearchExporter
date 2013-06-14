@@ -11,13 +11,14 @@ import scala.collection._
 
 trait Configurator {
   var config: Map[String, Any] =_
+  var jsonQuery: Array[Byte] =_
   def outHost: String = get(Conf.outHost).asInstanceOf[String]
   def inputHost: String = get(Conf.inHost).asInstanceOf[String]
   def indexIn: String = get(Conf.indexInput).asInstanceOf[String]
   def indexOut: String = get(Conf.indexOutput).asInstanceOf[String]
   def types: List[String] = get(Conf.types).asInstanceOf[List[String]]
-
-
-
+  def portHttp: String = get(Conf.portHttp).asInstanceOf[String]
+  def portTcp: String = get(Conf.portTCP).asInstanceOf[String]
+  def getBuffer: Int = get(Conf.buffer).asInstanceOf[Int]
   def get(value: String) = this.config.get(value.toString).get
 }
