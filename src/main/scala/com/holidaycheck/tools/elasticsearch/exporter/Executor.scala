@@ -52,22 +52,24 @@ object Executor extends Pipe with App {
   //TODO Leer Conf.json
   lazy val conf = Map[String, Any](
     //Hosts
-    "inHost" -> "localhost",
-    "outHost" -> "localhost",
+    "inHost" -> "dev-dach-m12n.hc.lan",
+    "outHost" -> "m12n-sf.hc.lan",
     //Protocols
     "Input_Protocol" -> "tcp",
-    "Output_Protocol" -> "tcp",
+    "Output_Protocol" -> "http",
     //Indexes
-    "indexInput" -> "tweter",
-    "indexOutput" -> "tweter2",
+    "indexInput" -> "search_de_de",
+    "indexOutput" -> "search_de_de",
     //Ports
-    "portHttp" -> "9200",
-    "portTCP" -> "9300",
+    "portHttpOut" -> "9200",
+    "portHttpIn" -> "9200",
+    "portTCPIn" -> "9500",
+    "portTCPOut" -> "9500",
     //types
-    "types" -> List[String]("tweet"),
+    "types" -> List[String]("destination"),
     //Cluster Names
-    "clusterNameIn" -> "elasticsearch",
-    "clusterNameOut" ->"elasticsearch",
+    "clusterNameIn" -> "tomcat-product-solo",
+    "clusterNameOut" ->"testing-es-client",
     //buffer size
     "bufferSize" -> 50000
   )
